@@ -30,7 +30,7 @@ if __name__ == '__main__':
                 # rebalance and start consuming
                 print("Waiting...")
             elif msg.error():
-                print("ERROR: %s".format(msg.error()))
+                print(f"ERROR: {msg.error()}")
             else:
                 # Extract the (optional) key and value, and print.
                 print("Consumed event from topic {topic}: key = {key:12} value = {value:12}".format(
