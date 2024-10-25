@@ -18,7 +18,7 @@ current_config = make_config(CONFIG_PATH)
 
 
 def add_cheese(order_id: str, pizza: dict) -> None:
-    sauce_producer = Producer(current_config)
+    cheese_producer = Producer(current_config)
     pizza["cheese"] = random.choice(
         [
             'extra', 'none', 'three cheese',
@@ -26,7 +26,9 @@ def add_cheese(order_id: str, pizza: dict) -> None:
             'goat cheese', 'ukr cheese'
         ]
     )
-    sauce_producer.produce("pizza-with-cheese", key=order_id, value=json.dumps(pizza))
+    cheese_producer.produce("pizza-with-cheese", key=order_id, value=json.dumps(pizza))
+    cheese_producer.flush()
+
 
 
 def start_service():
@@ -34,7 +36,7 @@ def start_service():
     pizza_consumer.subscribe(["pizza-with-sauce"])
 
     while True:
-        event = pizza_consumer.poll(0.1)
+        event = pizza_consumer.poll(1.0)
         if event is None:
             ...
         elif event.error():

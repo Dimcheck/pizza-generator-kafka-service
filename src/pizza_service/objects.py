@@ -35,12 +35,9 @@ class PizzaOrder(SerializableMixin):
     def pizzas(self):
         return self.__pizzas
 
-    @pizzas.setter
     def add_pizza(self, pizza: dict):
         self.pizzas.append(pizza)
 
-    def get_pizzas(self):
-        return self.pizzas
 
 
 

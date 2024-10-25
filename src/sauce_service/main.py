@@ -27,6 +27,7 @@ def add_sauce(order_id: str, pizza: dict) -> None:
         ]
     )
     sauce_producer.produce("pizza-with-sauce", key=order_id, value=json.dumps(pizza))
+    sauce_producer.flush()
 
 
 def start_service():
@@ -34,7 +35,7 @@ def start_service():
     pizza_consumer.subscribe(["pizza"])
 
     while True:
-        event = pizza_consumer.poll(0.1)
+        event = pizza_consumer.poll(1.0)
         if event is None:
             ...
         elif event.error():
