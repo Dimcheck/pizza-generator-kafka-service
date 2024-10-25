@@ -1,7 +1,7 @@
 import json
 from fastapi import FastAPI
 import uvicorn
-from src.pizza_service import service
+from pizza_service import service
 from threading import Thread
 
 app = FastAPI(__name__)
@@ -10,8 +10,13 @@ app = FastAPI(__name__)
 @app.post("/order/{count}")
 def order_pizzas(count):
     """order specific amount of pizzas with random fillings"""
-    order_id = service.order_pizzas(int(count))
+    order_id = service.order_pizzas(count)
     return json.dumps({"order_id": order_id})
+
+
+@app.get("/orders/")
+def get_all_orders():
+    return service.orders_db
 
 
 @app.get("/order/{order_id}")

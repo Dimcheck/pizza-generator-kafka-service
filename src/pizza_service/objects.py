@@ -3,7 +3,7 @@ import json
 import uuid
 
 
-class Serializable:
+class SerializableMixin:
     def to_json(self):
         return json.dumps(
             obj=self,
@@ -17,7 +17,7 @@ class Serializable:
 
 
 @dataclass
-class Pizza(Serializable):
+class Pizza(SerializableMixin):
     order_id: str
     sauce: str
     cheese: str
@@ -25,7 +25,7 @@ class Pizza(Serializable):
     veggies: str
 
 
-class PizzaOrder(Serializable):
+class PizzaOrder(SerializableMixin):
     def __init__(self, count):
         self.id = str(uuid.uuid4().int)
         self.count = count

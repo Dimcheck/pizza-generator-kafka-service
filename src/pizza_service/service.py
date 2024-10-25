@@ -1,6 +1,6 @@
 import json
 
-from src.pizza_service.objects import Pizza, PizzaOrder
+from pizza_service.objects import Pizza, PizzaOrder
 from configparser import ConfigParser
 from confluent_kafka import Producer, Consumer
 
@@ -14,14 +14,14 @@ def make_config(pathfile: str = "config.properties") -> dict:
         return {"producer": producer_config, "consumer": consumer_config}
 
 
-pizza_warmer = {}
+orders_db = {}
 current_config = make_config()
 
 
 def order_pizzas(count: int) -> int:
     pizza_producer = Producer(current_config["producer"])
     order = PizzaOrder(count)
-    pizza_warmer[order.id] = order
+    orders_db[order.id] = order
 
     for i in range(count):
         new_pizza = Pizza()
@@ -33,13 +33,13 @@ def order_pizzas(count: int) -> int:
 
 
 def add_pizza(order_id: int, pizza: dict) -> None:
-    if order_id in pizza_warmer.keys():
-        order = pizza_warmer[order_id]
+    if order_id in orders_db.keys():
+        order = orders_db[order_id]
         order.add_pizza(pizza)
 
 
 def get_order(order_id: int) -> str:
-    order = pizza_warmer[order_id]
+    order = orders_db[order_id]
     if order is None:
         return "Order not found, maybe it's not ready yet"
     else:
