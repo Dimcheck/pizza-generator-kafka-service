@@ -1,10 +1,10 @@
-from fastapi import FastAPI
 from threading import Thread
+
 import service
 import uvicorn
+from fastapi import FastAPI
 
-
-app = FastAPI(__name__)
+app = FastAPI()
 
 
 @app.get("/report")
