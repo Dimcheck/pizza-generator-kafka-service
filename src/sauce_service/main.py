@@ -1,20 +1,23 @@
-from configparser import ConfigParser
-from confluent_kafka import Producer, Consumer
 import json
 import random
+from configparser import ConfigParser
+from pathlib import Path
+
+from confluent_kafka import Consumer, Producer
+
+CONFIG_PATH = str(Path(__file__).parent / "config.properties",)
 
 
 def make_config(pathfile: str = "config.properties") -> dict:
-    config_parser = ConfigParser(interpolation=None)
-    with open(pathfile, "r") as config:
-        config_parser.read(config)
-        return config_parser["kafka_client"]
+    config_parser = ConfigParser()
+    config_parser.read(pathfile)
+    return dict(config_parser["kafka_client"])
 
 
-current_config = make_config()
+current_config = make_config(CONFIG_PATH)
 
 
-def add_sauce(order_id: int, pizza: dict) -> None:
+def add_sauce(order_id: str, pizza: dict) -> None:
     sauce_producer = Producer(current_config)
     pizza["sauce"] = random.choice(
         [

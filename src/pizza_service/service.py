@@ -1,21 +1,24 @@
 import json
-
-from pizza_service.objects import Pizza, PizzaOrder
 from configparser import ConfigParser
-from confluent_kafka import Producer, Consumer
+from pathlib import Path
+
+from confluent_kafka import Consumer, Producer
+from objects import Pizza, PizzaOrder
+
+CONFIG_PATH = str(Path(__file__).parent / "config.properties",)
 
 
-def make_config(pathfile: str = "config.properties") -> dict:
-    config_parser = ConfigParser(interpolation=None)
-    with open(pathfile, "r") as config:
-        config_parser.read(config)
-        producer_config, consumer_config = dict(config_parser["kafka_client"]), dict(config_parser["kafka_client"])
-        consumer_config.update(config_parser["consumer"])
-        return {"producer": producer_config, "consumer": consumer_config}
+def make_config(pathfile: str) -> dict:
+    config_parser = ConfigParser()
+    config_parser.read(pathfile)
+    producer_config = dict(config_parser["kafka_client"])
+    consumer_config = dict(config_parser["kafka_client"])
+    consumer_config.update(config_parser["consumer"])
+    return {"producer": producer_config, "consumer": consumer_config}
 
 
 orders_db = {}
-current_config = make_config()
+current_config = make_config(CONFIG_PATH)
 
 
 def order_pizzas(count: int) -> int:
@@ -32,13 +35,13 @@ def order_pizzas(count: int) -> int:
     return order.id
 
 
-def add_pizza(order_id: int, pizza: dict) -> None:
+def add_pizza(order_id: str, pizza: dict) -> None:
     if order_id in orders_db.keys():
         order = orders_db[order_id]
         order.add_pizza(pizza)
 
 
-def get_order(order_id: int) -> str:
+def get_order(order_id: str) -> str:
     order = orders_db[order_id]
     if order is None:
         return "Order not found, maybe it's not ready yet"
@@ -59,5 +62,4 @@ def load_orders() -> None:
         else:
             pizza = json.loads(event.value())
             add_pizza(pizza["order_id"], pizza)
-
 

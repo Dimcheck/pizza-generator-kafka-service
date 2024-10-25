@@ -1,20 +1,24 @@
 import json
 
+from psathlib import Path
 from configparser import ConfigParser
 from confluent_kafka import Consumer
 
 
+CONFIG_PATH = str(Path(__file__).parent / "config.properties",)
+
+
 def make_config(pathfile: str = "config.properties") -> dict:
-    config_parser = ConfigParser(interpolation=None)
-    with open(pathfile, "r") as config:
-        config_parser.read(config)
-        producer_config, consumer_config = dict(config_parser["kafka_client"]), dict(config_parser["kafka_client"])
-        consumer_config.update(config_parser["consumer"])
-        return {"producer": producer_config, "consumer": consumer_config}
+    config_parser = ConfigParser()
+    config_parser.read(pathfile)
+    producer_config = dict(config_parser["kafka_client"])
+    consumer_config = dict(config_parser["kafka_client"])
+    consumer_config.update(config_parser["consumer"])
+    return {"producer": producer_config, "consumer": consumer_config}
 
 
 pizzas_with_cheeses_db = {}
-current_config = make_config()
+current_config = make_config(CONFIG_PATH)
 
 
 def add_cheese(cheese: dict) -> None:
