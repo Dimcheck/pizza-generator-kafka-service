@@ -18,18 +18,18 @@ class SerializableMixin:
 
 @dataclass
 class Pizza(SerializableMixin):
-    order_id: str
-    sauce: str
-    cheese: str
-    meats: str
-    veggies: str
+    order_id: str = ''
+    sauce: str = ''
+    cheese: str = ''
+    meats: str = ''
+    veggies: str = ''
 
 
 class PizzaOrder(SerializableMixin):
     def __init__(self, count):
         self.id = str(uuid.uuid4().int)
         self.count = count
-        self.pizzas = []
+        self.__pizzas = []
 
     @property
     def pizzas(self):
