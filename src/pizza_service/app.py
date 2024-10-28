@@ -1,11 +1,21 @@
 import json
-from threading import Thread
-
 import service
 import uvicorn
+from threading import Thread
+from helpers import external_api
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
+
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.post("/order/{count}")
@@ -25,7 +35,13 @@ def get_order(order_id):
     return service.get_order(order_id)
 
 
-@app.on_event("startup")
+@app.get("/movie/", response_class=HTMLResponse)
+def get_movie_html(movie_name: str) -> HTMLResponse:
+    """get accostomed with htmx endpoints flow"""
+    return HTMLResponse(content=external_api.get_movie(movie_name), status_code=200)
+
+
+# @app.on_event("startup")
 def launch_consumer():
     second_thread = Thread(target=service.load_orders)
     second_thread.start()
