@@ -1,6 +1,6 @@
-from dataclasses import dataclass
 import json
 import uuid
+from dataclasses import dataclass
 
 
 class SerializableMixin:
@@ -23,6 +23,7 @@ class Pizza(SerializableMixin):
     cheese: str = ''
     meats: str = ''
     veggies: str = ''
+    image: str = ''
 
 
 class PizzaOrder(SerializableMixin):

@@ -4,6 +4,7 @@ from pathlib import Path
 
 from confluent_kafka import Consumer, Producer
 from objects import Pizza, PizzaOrder
+from apis.pizza_img_api import get_pizza_image
 
 CONFIG_PATH = str(Path(__file__).parent / "configs/config.properties",)
 
@@ -29,6 +30,8 @@ def order_pizzas(count: int) -> int:
     for i in range(count):
         new_pizza = Pizza()
         new_pizza.order_id = order.id
+        new_pizza.image = get_pizza_image()["image"]
+        print(f"image {i} loaded from {count}..")
         pizza_producer.produce("pizza", key=order.id, value=new_pizza.to_json())
 
     pizza_producer.flush()
@@ -47,6 +50,13 @@ def get_order(order_id: str) -> str:
         return "Order not found, maybe it's not ready yet"
     else:
         return order.to_json()
+
+
+def get_orders() -> str:
+    orders = {}
+    for k, v in orders_db.items():
+        orders[k] = v.to_json()
+    return orders
 
 
 def load_orders() -> None:

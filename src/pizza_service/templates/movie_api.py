@@ -1,9 +1,10 @@
 from apis import movie_api
+from fastapi.responses import HTMLResponse
 
 
 def short_desc(movie_name: str = "") -> str:
     movie_data = movie_api.get_movie(movie_name)
-    return f"""
+    html_content = f"""
         <body>
             <h3>{movie_data.get("Title", "Movie Title")}</h3>
             <img src={movie_data.get("Poster", "Movie Poster")} alt="movie-poster"/>
@@ -17,3 +18,4 @@ def short_desc(movie_name: str = "") -> str:
             {movie_data.get("Plot", "Movie Plot")}
         </body>
     """
+    return HTMLResponse(content=html_content, status_code=200)
