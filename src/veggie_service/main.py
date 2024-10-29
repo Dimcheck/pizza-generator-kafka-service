@@ -1,4 +1,3 @@
-
 import json
 import random
 from configparser import ConfigParser
@@ -23,12 +22,10 @@ def add_veggie(order_id: str, pizza: dict) -> None:
     pizza["veggies"] = " & ".join(
         random.choices(
             [
-                'tomato', 'olives', 'onions',
-                'peppers', 'pineapple', 'mushrooms',
-                'tomato', 'olives', 'onions',
+                'tomato',  'olives', 'onions',
                 'peppers', 'pineapple', 'mushrooms',
             ],
-            k=random.randint(1, 12)
+            k=random.randint(1, 6)
         )
     )
     veggie_producer.produce("pizza-with-veggies", key=order_id, value=json.dumps(pizza))

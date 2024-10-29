@@ -21,14 +21,12 @@ def add_cheese(order_id: str, pizza: dict) -> None:
     cheese_producer = Producer(current_config)
     pizza["cheese"] = random.choice(
         [
-            'extra', 'none', 'three cheese',
-            'goat cheese', 'extra', 'three cheese',
-            'goat cheese', 'ukr cheese'
-        ]
+            'none', 'ukr cheese', 'goat cheese',
+            'extra', 'three cheese',
+        ],
     )
     cheese_producer.produce("pizza-with-cheese", key=order_id, value=json.dumps(pizza))
     cheese_producer.flush()
-
 
 
 def start_service():

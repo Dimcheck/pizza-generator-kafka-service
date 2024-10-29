@@ -19,13 +19,14 @@ current_config = make_config(CONFIG_PATH)
 
 def add_meat(order_id: str, pizza: dict) -> None:
     meat_producer = Producer(current_config)
-    pizza["meats"] = random.choice(
-        [
-            'pepperoni', 'sausage', 'ham',
-            'anchovies', 'salami', 'bacon',
-            'pepperoni', 'sausage', 'ham',
-            'anchovies', 'salami', 'bacon'
-        ]
+    pizza["meats"] = " & ".join(
+        random.choices(
+            [
+                'anchovies', 'salami',  'bacon',
+                'pepperoni', 'sausage', 'ham',
+            ],
+            k=random.randint(1, 6)
+        )
     )
     meat_producer.produce("pizza-with-meats", key=order_id, value=json.dumps(pizza))
     meat_producer.flush()
