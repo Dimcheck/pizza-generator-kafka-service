@@ -1,17 +1,14 @@
-import json
-
 from fastapi.responses import HTMLResponse
 from kafka import service
 
 
 def list_pizzas(order_id: str) -> HTMLResponse:
-    order = service.orders_db[order_id]
-    pizzas = json.loads(order["_PizzaOrder__pizzas"])
+    order = service.orders_db[order_id].__dict__
+    pizzas = order["_PizzaOrder__pizzas"]
 
     html_content = f"""
     <body>
-        <p>Pizzas:</p>
-        <h3>{order.get("id", "")}</h3>
+        <h3>Pizzas of order #{order.get("id", "")}</h3>
         <table border="1" style="width: 100%; border-collapse: collapse;">
             <tr>
                 <th>Sauce</th>
@@ -21,16 +18,15 @@ def list_pizzas(order_id: str) -> HTMLResponse:
                 <th>Image</th>
             </tr>
     """
-
     for pizza in pizzas:
         html_content += f"""
-            <tr>
-                <td>{pizza["sauce"]}</td>
-                <td>{pizza["cheese"]}</td></tr>
-                <td>{pizza["meats"]}</td></tr>
-                <td>{pizza["veggies"]}</td></tr>
-                <img src="{pizza.get("image")} alt="pizza img"/>
-            </tr>
+        <tr>
+            <td>{pizza["sauce"]}</td>
+            <td>{pizza["cheese"]}</td></tr>
+            <td>{pizza["meats"]}</td></tr>
+            <td>{pizza["veggies"]}</td></tr>
+            <img src="{pizza.get("image")} alt="pizza img"/>
+        </tr>
         """
 
     html_content += """
