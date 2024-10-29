@@ -1,0 +1,48 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+   <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
+   <meta name="htmx-config" content='{"selfRequestsOnly":false}'>
+  </head>
+  <body>
+
+    <title>Order Review</title>
+    <h3>Request your Pizzas</h3>
+      <div id="request-order-container">
+        <input name="count" type="text" id="pizza-count" placeholder="Enter a number of pizzas you want.." />
+        <button
+            id="order-button"
+            hx-post="http://0.0.0.0:8000/order/"
+            hx-target="#response-order-container"
+            hx-trigger="click"
+            hx-include="[name='count']"
+            >
+            Order
+        </button>
+        <script>
+            document.getElementById('order-button').addEventListener('click', function() {
+                const pizzaCount = document.getElementById('pizza-count').value;
+                const url = `http://0.0.0.0:8000/order/${encodeURIComponent(movieTitle)}`;
+                this.setAttribute('hx-post', url);
+            });
+        </script>
+      </div>
+      <div id="response-order-container"></div>
+
+
+      <div id="request-see-orders-container">
+        <button
+            id="orders-button"
+            hx-get="http://0.0.0.0:8000/orders/"
+            hx-target="#response-all-orders-container"
+            hx-trigger="click"
+            >
+            See Current Orders
+        </button>
+      </div>
+      <div id="response-all-orders-container"></div>
+
+
+  </body>
+</html>

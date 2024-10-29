@@ -5,7 +5,7 @@ from pathlib import Path
 from confluent_kafka import Consumer, Producer
 from objects import Pizza, PizzaOrder
 
-CONFIG_PATH = str(Path(__file__).parent / "config.properties",)
+CONFIG_PATH = str(Path(__file__).parent / "configs/config.properties",)
 
 
 def make_config(pathfile: str) -> dict:

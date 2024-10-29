@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-ENV_PATH = str(list(Path(__file__).parents)[1] / ".env")
+ENV_PATH = str(list(Path(__file__).parents)[1] / "configs" / ".env")
 
 
 def read_env():
