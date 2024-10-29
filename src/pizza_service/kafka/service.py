@@ -3,10 +3,10 @@ from configparser import ConfigParser
 from pathlib import Path
 
 from confluent_kafka import Consumer, Producer
-from objects import Pizza, PizzaOrder
+from kafka.objects import Pizza, PizzaOrder
 from apis.pizza_img_api import get_pizza_image
 
-CONFIG_PATH = str(Path(__file__).parent / "configs/config.properties",)
+CONFIG_PATH = str(Path(__file__).parents[1] / "configs/config.properties",)
 
 
 def make_config(pathfile: str) -> dict:
