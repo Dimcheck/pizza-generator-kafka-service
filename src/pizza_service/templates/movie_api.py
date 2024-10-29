@@ -13,7 +13,6 @@ def short_desc(movie_name: str = "") -> str:
                 <li>Genre: {movie_data.get("Genre", "Genre")}</li>
                 <li>imdbRating: {movie_data.get("imdbRating", "Rating")}</li>
                 <li>Actors: {movie_data.get("Actors", "Actors")}</li>
-                <li>{movie_data.get("Genre", "Movie Genre")}</li>
             </ul>
             {movie_data.get("Plot", "Movie Plot")}
         </body>

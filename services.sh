@@ -4,4 +4,4 @@ gnome-terminal -- bash -c "echo 'This is Pizza Generator!'; cd src/pizza_service
 gnome-terminal -- bash -c "echo 'This is Sauce Service !';  cd src/sauce_service;   poetry install; poetry run python main.py; read -p 'Press Enter to stop...'"
 gnome-terminal -- bash -c "echo 'This is Cheese Service !'; cd src/cheese_service;  poetry install; poetry run python main.py; read -p 'Press Enter to stop...'"
 gnome-terminal -- bash -c "echo 'This is Meat Service !';   cd src/meat_service;    poetry install; poetry run python main.py; read -p 'Press Enter to stop...'"
-gnome-terminal -- bash -c "echo 'This is Vegies Service !'; cd src/veggie_service; poetry install; poetry run python main.py; read -p 'Press Enter to stop...'"
+gnome-terminal -- bash -c "echo 'This is Vegies Service !'; cd src/veggie_service;  poetry install; poetry run python main.py; read -p 'Press Enter to stop...'"

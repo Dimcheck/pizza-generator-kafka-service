@@ -5,9 +5,8 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-
 from kafka import service
-from templates import movie_api, pizza_api
+from templates import movie_api, pizza_service
 
 app = FastAPI()
 app.add_middleware(
@@ -28,14 +27,14 @@ def order_pizzas(count):
 
 @app.get("/orders/")
 def get_all_orders():
-    # return HTMLResponse(content=pizza_api.list_orders(), status_code=200)
+    # return HTMLResponse(content=pizza_service.list_orders(), status_code=200)
     return service.orders_db
 
 
 @app.get("/order/{order_id}")
 def get_order(order_id):
     # return service.get_order(order_id)
-    return pizza_api.list_pizzas(order_id)
+    return pizza_service.list_pizzas(order_id)
 
 
 @app.get("/movie/", response_class=HTMLResponse)
