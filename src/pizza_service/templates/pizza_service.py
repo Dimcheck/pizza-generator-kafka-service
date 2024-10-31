@@ -1,32 +1,28 @@
 from fastapi.responses import HTMLResponse
+from fastapi.exceptions import HTTPException
 from kafka import service
 
 
 def list_pizzas(order_id: str) -> HTMLResponse:
-    order = service.orders_db[order_id].__dict__
+    try:
+        order = service.orders_db[order_id].__dict__
+    except KeyError:
+        raise HTTPException(404, f"Order {order_id} not found")
     pizzas = order["_PizzaOrder__pizzas"]
 
     html_content = f"""
     <body>
         <h3>Pizzas of order #{order.get("id", "")}</h3>
-        <table border="1" style="width: 100%; border-collapse: collapse;">
-            <tr>
-                <th>Sauce</th>
-                <th>Cheese</th>
-                <th>Meats</th>
-                <th>Veggies</th>
-                <th>Image</th>
-            </tr>
     """
     for pizza in pizzas:
         html_content += f"""
-        <tr>
-            <td>{pizza["sauce"]}</td>
-            <td>{pizza["cheese"]}</td></tr>
-            <td>{pizza["meats"]}</td></tr>
-            <td>{pizza["veggies"]}</td></tr>
-            <img src="{pizza.get("image")} alt="pizza img"/>
-        </tr>
+        <ul>
+            <li><img src="{pizza.get("image")}" alt="pizza img" style="width: 60px; height: auto;"/></li>
+            <li>Sauce: {pizza["sauce"]}</li>
+            <li>Cheese: {pizza["cheese"]}</li>
+            <li>Meats: {pizza["meats"]}</li>
+            <li>Veggies: {pizza["veggies"]}</li>
+        </ul>
         """
 
     html_content += """
