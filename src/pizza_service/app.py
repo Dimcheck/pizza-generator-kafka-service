@@ -1,4 +1,3 @@
-import json
 from threading import Thread
 
 import uvicorn
@@ -6,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from kafka import service
-from templates import movie_api, pizza_service
+from templates import pizza_service
 
 app = FastAPI()
 app.add_middleware(
@@ -17,30 +16,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.post("/order/{count}")
-def order_pizzas(count):
+def order_pizzas(count) -> HTMLResponse:
     """order specific amount of pizzas with random fillings"""
-    order_id = service.order_pizzas(int(count))
-    return HTMLResponse(content=json.dumps({"order_id": order_id}), status_code=200)
+    return pizza_service.list_order(service.order_pizzas(int(count)))
 
 
 @app.get("/orders/")
 def get_all_orders():
-    # return HTMLResponse(content=pizza_service.list_orders(), status_code=200)
     return service.orders_db
 
 
 @app.get("/order/{order_id}")
 def get_order(order_id):
-    # return service.get_order(order_id)
     return pizza_service.list_pizzas(order_id)
-
-
-@app.get("/movie/", response_class=HTMLResponse)
-def get_movie_html(movie_name: str):
-    """get accostomed with htmx endpoints flow"""
-    return movie_api.short_desc(movie_name)
 
 
 @app.on_event("startup")

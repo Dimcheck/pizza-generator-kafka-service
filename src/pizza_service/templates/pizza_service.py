@@ -3,6 +3,11 @@ from fastapi.exceptions import HTTPException
 from kafka import service
 
 
+
+def list_order(order_id: int) -> HTMLResponse:
+    html_content = f"""<span class="fade-in">{order_id}</span>"""
+    return HTMLResponse(content=html_content, status_code=200)
+
 def list_pizzas(order_id: str) -> HTMLResponse:
     try:
         order = service.orders_db[order_id].__dict__
@@ -16,7 +21,7 @@ def list_pizzas(order_id: str) -> HTMLResponse:
     """
     for pizza in pizzas:
         html_content += f"""
-        <ul>
+        <ul class="fade-in">
             <li><img src="{pizza.get("image")}" alt="pizza img" style="width: 60px; height: auto;"/></li>
             <li>Sauce: {pizza["sauce"]}</li>
             <li>Cheese: {pizza["cheese"]}</li>
