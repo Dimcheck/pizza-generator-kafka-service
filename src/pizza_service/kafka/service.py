@@ -1,9 +1,9 @@
 import json
-from time import sleep
 from pathlib import Path
 
 from apis.pizza_img_api import get_pizza_image
 from apis.utils import make_config
+from apis.helpers import add_pizza, add_movie_ticket
 from confluent_kafka import Consumer, Producer
 from kafka.objects import Pizza, PizzaOrder
 
@@ -14,22 +14,8 @@ orders_db = {}
 current_config = make_config(CONFIG_PATH)
 
 
-def add_pizza(order_id: str, pizza: dict) -> None:
-    if order_id in orders_db.keys():
-        order = orders_db[order_id]
-        order.add_pizza(pizza)
 
-
-def add_movie_ticket(order_id: str, movie_ticket: dict) -> None:
-    for i in range(3):
-        try:
-            orders_db[order_id].movie_ticket = movie_ticket
-        except KeyError:
-            print("Warning: Order have not created yet")
-            sleep(1)
-
-
-def order_pizzas(count: int) -> int:
+def order_pizzas(count: int) -> str:
     pizza_producer = Producer(current_config["producer"])
     order_producer = Producer(current_config["producer"])
 
@@ -46,7 +32,6 @@ def order_pizzas(count: int) -> int:
 
     order_producer.produce("order", key=order.id, value="")
     order_producer.flush()
-
     return order.id
 
 
@@ -62,7 +47,7 @@ def load_orders() -> None:
             print(f"ERROR: {event.error()}")
         else:
             pizza = json.loads(event.value())
-            add_pizza(pizza["order_id"], pizza)
+            add_pizza(pizza["order_id"], pizza, orders_db)
 
 
 def load_order_bonuses() -> None:
@@ -77,5 +62,5 @@ def load_order_bonuses() -> None:
             print(f"ERROR: {event.error()}")
         else:
             movie_ticket = json.loads(event.value())
-            add_movie_ticket(event.key().decode("ascii"), movie_ticket)
+            add_movie_ticket(event.key().decode("ascii"), movie_ticket, orders_db)
 
