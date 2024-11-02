@@ -32,4 +32,3 @@ class Communication:
     def get_response_with_params(self, retries: int = 3, **kwargs):
         self.url = f"{self.url}?{u_parse.urlencode(kwargs)}"
         return self.get_response(retries)
-
