@@ -16,7 +16,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.post("/order/{count}")
 def order_pizzas(count) -> HTMLResponse:
     """order specific amount of pizzas with random fillings"""
@@ -34,12 +33,9 @@ def get_order(order_id):
 
 
 @app.on_event("startup")
-def launch_consumers():
+def launch_consumer():
     second_thread = Thread(target=service.load_orders)
-    third_thread = Thread(target=service.load_order_bonuses)
-
     second_thread.start()
-    third_thread.start()
 
 
 if __name__ == "__main__":
