@@ -33,6 +33,11 @@ def get_order(order_id):
     return pizza_service.list_pizzas(order_id)
 
 
+@app.get("/order_bonus/{order_id}")
+def get_order_bonuses(order_id):
+    return pizza_service.check_movie_ticket(order_id)
+
+
 @app.on_event("startup")
 def launch_consumers():
     second_thread = Thread(target=service.load_orders)

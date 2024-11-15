@@ -2,13 +2,14 @@ import json
 from pathlib import Path
 
 from apis.movie_api import get_random_movie
-from apis.utils import make_config
+from apis.utils import make_config, with_chance
 from confluent_kafka import Consumer, Producer
 
 CONFIG_PATH = str(Path(__file__).parent / "configs/config.properties",)
 current_config = make_config(CONFIG_PATH)
 
 
+@with_chance(0.3)
 def movie_ticket_producer(order_id: str) -> None:
     ticket_producer = Producer(current_config)
     ticket_producer.produce("movie-ticket", key=order_id, value=json.dumps(get_random_movie()))

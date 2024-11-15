@@ -1,3 +1,5 @@
+from fastapi.exceptions import HTTPException
+from kafka import service
 from time import sleep
 
 
@@ -15,4 +17,10 @@ def add_movie_ticket(order_id: str, movie_ticket: dict, db: dict) -> None:
             print("Warning: Order have not created yet")
             sleep(1)
 
+
+def get_order(order_id: str) -> dict | HTTPException:
+    try:
+        return service.orders_db[order_id].__dict__
+    except KeyError:
+        raise HTTPException(404, f"Order {order_id} not found")
 

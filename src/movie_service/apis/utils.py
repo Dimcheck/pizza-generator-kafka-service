@@ -1,4 +1,5 @@
 import os
+from random import random
 from pathlib import Path
 from configparser import ConfigParser
 
@@ -19,4 +20,16 @@ def make_config(pathfile: str = "config.properties") -> dict:
     config_parser.read(pathfile)
     return dict(config_parser["kafka_client"])
 
+
+def with_chance(chance: float = 0.1):
+    """
+    should be used with functions
+    where invokation supposed to be random to degree
+    """
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            if random() < chance:
+                return func(*args, **kwargs)
+        return wrapper
+    return decorator
 
