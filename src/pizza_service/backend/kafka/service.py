@@ -1,21 +1,21 @@
 import json
-from pathlib import Path
 
 from backend.helpers import add_movie_ticket, add_pizza
+from backend.kafka.objects import Pizza, PizzaOrder
 from backend.pizza_img_api import get_pizza_image
 from backend.utils import make_config
 from confluent_kafka import Consumer, Producer
-from kafka.objects import Pizza, PizzaOrder
-
-CONFIG_PATH = str(Path(__file__).parents[1] / "configs/config.properties",)
 
 
 orders_db = {}
-current_config = make_config(CONFIG_PATH)
-
+current_config = make_config()
 
 
 def order_pizzas(count: int) -> str:
+    """
+    create sequence of pizzas by ::count::
+    sent each pizza to kafka ingredient consumer
+    """
     pizza_producer = Producer(current_config["producer"])
     order_producer = Producer(current_config["producer"])
 
@@ -36,6 +36,10 @@ def order_pizzas(count: int) -> str:
 
 
 def load_orders() -> None:
+    """
+    accept last ingredient from pizza-with-veggies kafka producer
+    add pizza to order
+    """
     pizza_consumer = Consumer(current_config["consumer1"])
     pizza_consumer.subscribe(["pizza-with-veggies"])
 
@@ -51,6 +55,10 @@ def load_orders() -> None:
 
 
 def load_order_bonuses() -> None:
+    """
+    accept bonuses (if there are any) after order creation
+    add bonuses to order
+    """
     order_consumer = Consumer(current_config["consumer2"])
     order_consumer.subscribe(["movie-ticket"])
 

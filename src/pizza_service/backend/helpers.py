@@ -1,6 +1,7 @@
-from fastapi.exceptions import HTTPException
-from kafka import service
 from time import sleep
+
+from backend.kafka import service
+from fastapi.exceptions import HTTPException
 
 
 def add_pizza(order_id: str, pizza: dict, db: dict) -> None:

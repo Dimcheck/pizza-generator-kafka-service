@@ -1,10 +1,10 @@
 from threading import Thread
 
 import uvicorn
+from backend.kafka import service
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
-from kafka import service
 from templates import pizza_service
 
 app = FastAPI()

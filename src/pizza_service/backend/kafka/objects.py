@@ -31,7 +31,7 @@ class PizzaOrder(SerializableMixin):
         self.id = str(uuid.uuid4().int)
         self.count = count
         self.__pizzas = []
-        self.movie_ticket = {}  # TODO add logic for 10% chance of getting a ticket
+        self.movie_ticket = {}
 
     @property
     def pizzas(self):

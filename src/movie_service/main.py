@@ -1,12 +1,10 @@
 import json
-from pathlib import Path
 
 from apis.movie_api import get_random_movie
 from apis.utils import make_config, with_chance
 from confluent_kafka import Consumer, Producer
 
-CONFIG_PATH = str(Path(__file__).parent / "configs/config.properties",)
-current_config = make_config(CONFIG_PATH)
+current_config = make_config()
 
 
 @with_chance(0.3)
