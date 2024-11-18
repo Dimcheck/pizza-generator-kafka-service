@@ -1,4 +1,4 @@
-from apis.base import Communication
+from backend.base import Communication
 
 
 def get_pizza_image() -> dict:

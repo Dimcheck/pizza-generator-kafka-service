@@ -1,9 +1,9 @@
 import json
 from pathlib import Path
 
-from apis.pizza_img_api import get_pizza_image
-from apis.utils import make_config
-from apis.helpers import add_pizza, add_movie_ticket
+from backend.helpers import add_movie_ticket, add_pizza
+from backend.pizza_img_api import get_pizza_image
+from backend.utils import make_config
 from confluent_kafka import Consumer, Producer
 from kafka.objects import Pizza, PizzaOrder
 
