@@ -1,15 +1,16 @@
 from backend.helpers import get_order
 from fastapi.responses import HTMLResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
-def list_order(order_id: int) -> HTMLResponse:
-    html_content = f"""<span class="fade-in">{order_id}</span>"""
+async def list_order(order_uuid: int) -> HTMLResponse:
+    html_content = f"""<span class="fade-in">{order_uuid}</span>"""
     return HTMLResponse(content=html_content, status_code=200)
 
 
-def check_movie_ticket(order_id: str) -> HTMLResponse:
-    order = get_order(order_id)
-    movie = order["movie_ticket"]
+async def check_movie_ticket(db: AsyncSession, order_uuid: str) -> HTMLResponse:
+    order = await get_order(db, order_uuid)
+    movie = order.movie_ticket
 
     if movie.get("Response") == "True":
         html_content = f"""
@@ -25,13 +26,13 @@ def check_movie_ticket(order_id: str) -> HTMLResponse:
     return HTMLResponse(content="", status_code=404)
 
 
-def list_pizzas(order_id: str) -> HTMLResponse:
-    order = get_order(order_id)
-    pizzas = order["_PizzaOrder__pizzas"]
+async def list_pizzas(db: AsyncSession, order_uuid: str) -> HTMLResponse:
+    order = await get_order(db, order_uuid)
+    pizzas = order.pizzas
 
     html_content = f"""
     <body>
-        <h3>Pizzas of order #{order.get("id", "")}</h3>
+        <h3>Pizzas of order #{order.uuid}</h3>
     """
     for pizza in pizzas:
         html_content += f"""

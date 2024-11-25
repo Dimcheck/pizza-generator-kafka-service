@@ -1,27 +1,36 @@
-from time import sleep
+from asyncio import sleep
 
-from backend.kafka import service
+from backend.base import Communication
+from db.models import Order
 from fastapi.exceptions import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
-def add_pizza(order_id: str, pizza: dict, db: dict) -> None:
-    if order_id in db.keys():
-        order = db[order_id]
-        order.add_pizza(pizza)
+async def add_pizza(db: AsyncSession, order_uuid: str, pizza: dict) -> None:
+    if order := await Order.get_by_column(db, column_name="uuid", column_value=order_uuid):
+        current_pizzas = order.pizzas or []
+        current_pizzas.append(pizza)
+        await Order.update(db, column_name="uuid", column_value=order_uuid, pizzas=current_pizzas)
+    return None
 
 
-def add_movie_ticket(order_id: str, movie_ticket: dict, db: dict) -> None:
+
+async def add_movie_ticket(db: AsyncSession, order_uuid: str, movie_ticket: dict) -> None:
     for i in range(3):
         try:
-            db[order_id].movie_ticket = movie_ticket
-        except KeyError:
+            await Order.update(db, column_name="uuid", column_value=order_uuid, movie_ticket=movie_ticket)
+        except Exception:
             print("Warning: Order have not created yet")
-            sleep(1)
+            await sleep(1)
 
 
-def get_order(order_id: str) -> dict | HTTPException:
+async def get_order(db: AsyncSession, order_uuid: str) -> dict | HTTPException:
     try:
-        return service.orders_db[order_id].__dict__
+        return Order.get_by_column(db, column_name="uuid", column_value=order_uuid)
     except KeyError:
-        raise HTTPException(404, f"Order {order_id} not found")
+        raise HTTPException(404, f"Order {order_uuid} not found")
 
+
+async def get_pizza_image() -> dict:
+    request = Communication("https://foodish-api.com/api/images/pizza")
+    return await request.get_response()

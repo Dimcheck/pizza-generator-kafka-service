@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import (
 class Base(AsyncAttrs, DeclarativeBase):
     __abstract__ = True
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
     @classmethod
     async def get_all(cls, db: AsyncSession):
@@ -26,14 +26,14 @@ class Base(AsyncAttrs, DeclarativeBase):
         return query.scalars().all()
 
     @classmethod
-    async def get_by_column(cls, db: AsyncSession, column_name: str, column_value:str, many: bool = True):
+    async def get_by_column(cls, db: AsyncSession, column_name: str, column_value: str, many: bool = True):
         filter_condition = getattr(cls, column_name) == column_value
         query = select(cls).where(filter_condition)
         result = await db.execute(query)
 
         if many:
             return result.scalars().all()
-        return result.scalar_one()
+        return result.scalar_one_or_none()
 
     @classmethod
     async def get_by_column_in(cls, db: AsyncSession, column_name: str, column_value: List[str]):

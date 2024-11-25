@@ -11,6 +11,7 @@ from alembic import context
 # New imports
 from configs.settings import settings
 from db.session import Base
+from db.models import User, Order
 
 
 # this is the Alembic Config object, which provides

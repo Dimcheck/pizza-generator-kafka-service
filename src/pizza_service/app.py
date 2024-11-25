@@ -1,7 +1,12 @@
+import asyncio
 from threading import Thread
+from typing import Any, List
 
 import uvicorn
+from backend import schemas
 from backend.kafka import service
+from db import models
+from db.session import DB_DEPENDENCY
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
@@ -18,30 +23,49 @@ app.add_middleware(
 
 
 @app.post("/order/{count}")
-def order_pizzas(count) -> HTMLResponse:
+async def order_pizzas(
+    db: DB_DEPENDENCY,
+    count: int,
+) -> HTMLResponse:
     """order specific amount of pizzas with random fillings"""
-    return pizza_service.list_order(service.order_pizzas(int(count)))
+
+    order = await service.order_pizzas(db, int(count))
+    return await pizza_service.list_order(order)
 
 
-@app.get("/orders/")
-def get_all_orders():
-    return service.orders_db
+@app.get("/orders/", response_model=List[schemas.Order])
+async def get_all_orders(
+    db: DB_DEPENDENCY,
+) -> Any:
+
+    return await models.Order.get_all(db)
 
 
-@app.get("/order/{order_id}")
-def get_order(order_id):
-    return pizza_service.list_pizzas(order_id)
+@app.get("/order/{order_uuid}")
+async def get_order(
+    db: DB_DEPENDENCY,
+    order_uuid: str,
+) -> HTMLResponse:
+
+    return await pizza_service.list_pizzas(db, order_uuid)
 
 
-@app.get("/order_bonus/{order_id}")
-def get_order_bonuses(order_id):
-    return pizza_service.check_movie_ticket(order_id)
+@app.get("/order_bonus/{order_uuid}")
+async def get_order_bonuses(
+    db: DB_DEPENDENCY,
+    order_uuid: str,
+) -> HTMLResponse:
+
+    return await pizza_service.check_movie_ticket(db, order_uuid)
 
 
 @app.on_event("startup")
-def launch_consumers():
-    second_thread = Thread(target=service.load_orders)
-    third_thread = Thread(target=service.load_order_bonuses)
+async def launch_consumers():
+    def run_in_thread(coro, *args):
+        asyncio.run(coro(*args))
+
+    second_thread = Thread(target=run_in_thread, args=[service.load_orders, DB_DEPENDENCY])
+    third_thread = Thread(target=run_in_thread, args=[service.load_order_bonuses, DB_DEPENDENCY])
 
     second_thread.start()
     third_thread.start()
