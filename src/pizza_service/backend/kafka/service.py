@@ -1,5 +1,6 @@
 import json
 import uuid
+import asyncio
 
 from backend.helpers import add_movie_ticket, add_pizza, get_pizza_image
 from backend.schemas import Pizza
@@ -29,6 +30,7 @@ async def order_pizzas(db: AsyncSession, count: int) -> str:
         image_data = await get_pizza_image()
         new_pizza.image = image_data["image"]
         print(f"image {i} loaded from {count}..")
+        print(new_pizza)
         pizza_producer.produce("pizza", key=order.uuid, value=new_pizza.model_dump_json())
     pizza_producer.flush()
 
@@ -38,7 +40,7 @@ async def order_pizzas(db: AsyncSession, count: int) -> str:
     return order.uuid
 
 
-async def load_orders(db: AsyncSession) -> None:
+def load_orders(db: AsyncSession) -> None:
     """
     accept last ingredient from pizza-with-veggies kafka producer
     add pizza to order
@@ -54,12 +56,13 @@ async def load_orders(db: AsyncSession) -> None:
             print(f"ERROR: {event.error()}")
         else:
             pizza = json.loads(event.value())
+            print("Caught event from VEGGIES PRODUCER")
             # TypeError: AsyncSession.execute() missing 1 required positional argument: 'statement
-            await add_pizza(db, pizza["order_id"], pizza)
+            asyncio.run(add_pizza(db, pizza["order_id"], pizza))
 
 
 
-async def load_order_bonuses(db: AsyncSession) -> None:
+def load_order_bonuses(db: AsyncSession) -> None:
     """
     accept bonuses (if there are any) after order creation
     add bonuses to order
@@ -75,5 +78,6 @@ async def load_order_bonuses(db: AsyncSession) -> None:
             print(f"ERROR: {event.error()}")
         else:
             movie_ticket = json.loads(event.value())
-            await add_movie_ticket(db, event.key().decode("ascii"), movie_ticket)
+            print("Caught event from ORDER PRODUCER")
+            asyncio.run(add_movie_ticket(db, event.key().decode("ascii"), movie_ticket))
 

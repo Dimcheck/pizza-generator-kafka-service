@@ -1,5 +1,5 @@
 import asyncio
-from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, List
 
 import uvicorn
@@ -11,6 +11,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from templates import pizza_service
+
 
 app = FastAPI()
 app.add_middleware(
@@ -59,16 +60,18 @@ async def get_order_bonuses(
     return await pizza_service.check_movie_ticket(db, order_uuid)
 
 
+executor = ThreadPoolExecutor()
+
+
 @app.on_event("startup")
 async def launch_consumers():
-    def run_in_thread(coro, *args):
-        asyncio.run(coro(*args))
+    # asyncio.create_task(service.load_orders(DB_DEPENDENCY))
+    # asyncio.create_task(service.load_order_bonuses(DB_DEPENDENCY))
+    loop = asyncio.get_event_loop()
+    loop.run_in_executor(executor, service.load_orders, DB_DEPENDENCY)
+    loop.run_in_executor(executor, service.load_order_bonuses, DB_DEPENDENCY)
 
-    second_thread = Thread(target=run_in_thread, args=[service.load_orders, DB_DEPENDENCY])
-    third_thread = Thread(target=run_in_thread, args=[service.load_order_bonuses, DB_DEPENDENCY])
 
-    second_thread.start()
-    third_thread.start()
 
 
 if __name__ == "__main__":

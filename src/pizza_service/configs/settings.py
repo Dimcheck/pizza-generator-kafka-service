@@ -13,13 +13,14 @@ class Settings:
     API_V1_STR:           str = "/api/v1"
     PROJECT_NAME:         str = "Pizza-Generator-Service"
 
-    MYSQL_USER:        str = os.getenv("MYSQL_USER")
-    MYSQL_PASSWORD:    str = os.getenv("MYSQL_PASSWORD")
-    MYSQL_DB:          str = os.getenv("MYSQL_DB")
-    MYSQL_PORT:        int = os.getenv("MYSQL_PORT", 6024)
-    MYSQL_SERVER:      str = os.getenv("MYSQL_SERVER")
+    MYSQL_USER:           str = os.getenv("MYSQL_USER")
+    MYSQL_PASSWORD:       str = os.getenv("MYSQL_PASSWORD")
+    MYSQL_ROOT_PASSWORD:  str = os.getenv("MYSQL_ROOT_PASSWORD")
+    MYSQL_DATABASE:       str = os.getenv("MYSQL_DATABASE")
+    MYSQL_PORT:           int = os.getenv("MYSQL_PORT")
+    MYSQL_SERVER:         str = os.getenv("MYSQL_SERVER")
 
-    DATABASE_URL:         str = f"mysql+aiomysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_SERVER}:{MYSQL_PORT}/{MYSQL_DB}"
+    DATABASE_URL:         str = f"mysql+asyncmy://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_SERVER}:{MYSQL_PORT}/{MYSQL_DATABASE}"
 
 
 settings = Settings()

@@ -14,5 +14,5 @@ class Pizza(BaseModel):
 class Order(BaseModel):
     uuid: str
     count: int
-    pizzas: List[Pizza]
+    pizzas: dict
     movie_ticket: dict
