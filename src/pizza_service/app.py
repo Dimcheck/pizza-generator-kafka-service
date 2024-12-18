@@ -1,5 +1,4 @@
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any, List
 
 import uvicorn
@@ -7,7 +6,7 @@ from backend import schemas
 from backend.kafka import service
 from db import models
 from db.session import DB_DEPENDENCY
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from templates import pizza_service
@@ -60,16 +59,12 @@ async def get_order_bonuses(
     return await pizza_service.check_movie_ticket(db, order_uuid)
 
 
-executor = ThreadPoolExecutor()
 
 
 @app.on_event("startup")
 async def launch_consumers():
-    # asyncio.create_task(service.load_orders(DB_DEPENDENCY))
-    # asyncio.create_task(service.load_order_bonuses(DB_DEPENDENCY))
-    loop = asyncio.get_event_loop()
-    loop.run_in_executor(executor, service.load_orders, DB_DEPENDENCY)
-    loop.run_in_executor(executor, service.load_order_bonuses, DB_DEPENDENCY)
+    await service.load_orders(DB_DEPENDENCY)
+    await service.load_order_bonuses(DB_DEPENDENCY)
 
 
 

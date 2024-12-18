@@ -1,11 +1,11 @@
+import asyncio
 import json
 import uuid
-import asyncio
 
+from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 from backend.helpers import add_movie_ticket, add_pizza, get_pizza_image
 from backend.schemas import Pizza
 from backend.utils import make_config
-from confluent_kafka import Consumer, Producer
 from db.models import Order
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,12 +17,12 @@ async def order_pizzas(db: AsyncSession, count: int) -> str:
     create sequence of pizzas by ::count::
     sent each pizza to kafka ingredient consumer
     """
-    pizza_producer = Producer(current_config["producer"])
-    order_producer = Producer(current_config["producer"])
+    main_producer = AIOKafkaProducer(**current_config["producer"])
+
+    await main_producer.start()
 
     order_uuid = str(uuid.uuid4().int)
     order = await Order.create(db, uuid=order_uuid, count=count)
-    # order = await Order.get_by_column(db, column_name="uuid", column_value=order_uuid)
 
     for i in range(count):
         new_pizza = Pizza()
@@ -31,53 +31,54 @@ async def order_pizzas(db: AsyncSession, count: int) -> str:
         new_pizza.image = image_data["image"]
         print(f"image {i} loaded from {count}..")
         print(new_pizza)
-        pizza_producer.produce("pizza", key=order.uuid, value=new_pizza.model_dump_json())
-    pizza_producer.flush()
+        await main_producer.send_and_wait("pizza", key=order.uuid.encode("utf-8"), value=new_pizza.model_dump_json().encode("utf-8"))
+        print("Producer sent messages!")
 
-    order_producer.produce("order", key=order.uuid, value="")
-    order_producer.flush()
+    try:
+        await main_producer.send_and_wait("order", key=order.uuid.encode("utf-8"), value=b"")
+        print("Producer sent all messages!")
+    finally:
+        await main_producer.stop()
 
     return order.uuid
 
 
-def load_orders(db: AsyncSession) -> None:
+async def load_orders(db: AsyncSession) -> None:
     """
     accept last ingredient from pizza-with-veggies kafka producer
     add pizza to order
     """
-    pizza_consumer = Consumer(current_config["consumer1"])
+    # pizza_consumer = AIOKafkaConsumer(*["pizza-with-veggies"], **current_config["consumer1"])
+    pizza_consumer = AIOKafkaConsumer(**current_config["consumer1"])
+    await pizza_consumer.start()
     pizza_consumer.subscribe(["pizza-with-veggies"])
+    print("Consumer started!")
 
-    while True:
-        event = pizza_consumer.poll(1.0)
+    async for event in pizza_consumer:
         if event is None:
             ...
-        elif event.error():
-            print(f"ERROR: {event.error()}")
         else:
-            pizza = json.loads(event.value())
+            pizza = json.loads(event.value.decode("utf-8"))
             print("Caught event from VEGGIES PRODUCER")
-            # TypeError: AsyncSession.execute() missing 1 required positional argument: 'statement
-            asyncio.run(add_pizza(db, pizza["order_id"], pizza))
+            await add_pizza(db, pizza["order_id"], pizza)
 
 
-
-def load_order_bonuses(db: AsyncSession) -> None:
+async def load_order_bonuses(db: AsyncSession) -> None:
     """
     accept bonuses (if there are any) after order creation
     add bonuses to order
     """
-    order_consumer = Consumer(current_config["consumer2"])
+    # order_consumer = AIOKafkaConsumer(*["movie-ticket"], **current_config["consumer2"])
+    order_consumer = AIOKafkaConsumer(**current_config["consumer2"])
+    await order_consumer.start()
     order_consumer.subscribe(["movie-ticket"])
+    print("Consumer started!")
 
-    while True:
-        event = order_consumer.poll(1.0)
+    async for event in order_consumer:
         if event is None:
             ...
-        elif event.error():
-            print(f"ERROR: {event.error()}")
         else:
-            movie_ticket = json.loads(event.value())
+            movie_ticket = json.loads(event.value.decode("utf-8"))
             print("Caught event from ORDER PRODUCER")
-            asyncio.run(add_movie_ticket(db, event.key().decode("ascii"), movie_ticket))
+            await add_movie_ticket(db, event.key.decode("utf-8"), movie_ticket)
 

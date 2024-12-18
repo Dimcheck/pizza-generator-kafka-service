@@ -19,7 +19,12 @@ def read_env():
 def make_config(pathfile: str = CONFIG_PATH) -> dict:
     config_parser = ConfigParser()
     config_parser.read(pathfile)
-    return dict(config_parser["kafka_client"])
+    producer_config = dict(config_parser["kafka_client"])
+    consumer_config = dict(config_parser["consumer"])
+    return {
+        "producer": producer_config,
+        "consumer": consumer_config,
+    }
 
 
 def with_chance(chance: float = 0.1):
@@ -28,9 +33,9 @@ def with_chance(chance: float = 0.1):
     where invokation supposed to be random to degree
     """
     def decorator(func):
-        def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs):
             if random() < chance:
-                return func(*args, **kwargs)
+                return await func(*args, **kwargs)
         return wrapper
     return decorator
 

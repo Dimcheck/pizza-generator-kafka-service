@@ -1,9 +1,10 @@
+import asyncio
 import json
 import random
 from configparser import ConfigParser
 from pathlib import Path
 
-from confluent_kafka import Consumer, Producer
+from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 
 CONFIG_PATH = str(Path(__file__).parent / "config.properties",)
 
@@ -11,14 +12,21 @@ CONFIG_PATH = str(Path(__file__).parent / "config.properties",)
 def make_config(pathfile: str = "config.properties") -> dict:
     config_parser = ConfigParser()
     config_parser.read(pathfile)
-    return dict(config_parser["kafka_client"])
+    producer_config = dict(config_parser["kafka_client"])
+    consumer_config = dict(config_parser["consumer"])
+    return {
+        "producer": producer_config,
+        "consumer": consumer_config,
+    }
 
 
 current_config = make_config(CONFIG_PATH)
 
 
-def add_veggie(order_id: str, pizza: dict) -> None:
-    veggie_producer = Producer(current_config)
+async def add_veggie(order_id: str, pizza: dict) -> None:
+    veggie_producer = AIOKafkaProducer(**current_config["producer"])
+    await veggie_producer.start()
+
     pizza["veggies"] = " & ".join(
         random.choices(
             [
@@ -28,25 +36,26 @@ def add_veggie(order_id: str, pizza: dict) -> None:
             k=random.randint(1, 6)
         )
     )
-    veggie_producer.produce("pizza-with-veggies", key=order_id, value=json.dumps(pizza))
-    veggie_producer.flush()
+    try:
+        await veggie_producer.send_and_wait("pizza-with-veggies", key=order_id.encode("utf-8"), value=json.dumps(pizza).encode("utf-8"))
+    finally:
+        await veggie_producer.stop()
 
 
-def start_service():
-    pizza_consumer = Consumer(current_config)
+async def start_service():
+    # pizza_consumer = AIOKafkaConsumer(*["pizza-with-meats"], **current_config["consumer"])
+    pizza_consumer = AIOKafkaConsumer(**current_config["consumer"])
+    await pizza_consumer.start()
     pizza_consumer.subscribe(["pizza-with-meats"])
 
-    while True:
-        event = pizza_consumer.poll(1.0)
+    async for event in pizza_consumer:
         if event is None:
             ...
-        elif event.error():
-            print(f"ERROR: {event.error()}")
         else:
-            pizza = json.loads(event.value())
-            add_veggie(event.key(), pizza)
+            pizza = json.loads(event.value.decode("utf-8"))
+            await add_veggie(event.key.decode("utf-8"), pizza)
 
 
 if __name__ == "__main__":
-    start_service()
+    asyncio.run(start_service())
 
