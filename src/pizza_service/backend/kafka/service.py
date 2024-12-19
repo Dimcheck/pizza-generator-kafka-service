@@ -27,10 +27,10 @@ async def order_pizzas(db: AsyncSession, count: int) -> str:
     for i in range(count):
         new_pizza = Pizza()
         new_pizza.order_id = order.uuid
-        image_data = await get_pizza_image()
-        new_pizza.image = image_data["image"]
-        print(f"image {i} loaded from {count}..")
-        print(new_pizza)
+        # image_data = await get_pizza_image()
+        # new_pizza.image = image_data["image"]
+        # print(f"image {i} loaded from {count}..")
+        # print(new_pizza)
         await main_producer.send_and_wait("pizza", key=order.uuid.encode("utf-8"), value=new_pizza.model_dump_json().encode("utf-8"))
         print("Producer sent messages!")
     """TODO refactor"""
