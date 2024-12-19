@@ -26,7 +26,7 @@ class Base(AsyncAttrs, DeclarativeBase):
         return query.scalars().all()
 
     @classmethod
-    async def get_by_column(cls, db: AsyncSession, column_name: str, column_value: str, many: bool = True):
+    async def get_by_column(cls, db: AsyncSession, column_name: str, column_value: str, many: bool = False):
         filter_condition = getattr(cls, column_name) == column_value
         query = select(cls).where(filter_condition)
         result = await db.execute(query)

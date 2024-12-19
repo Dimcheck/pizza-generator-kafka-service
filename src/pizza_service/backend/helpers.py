@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 async def add_pizza(db: AsyncSession, order_uuid: str, pizza: dict) -> None:
     if order := await Order.get_by_column(db, column_name="uuid", column_value=order_uuid):
-        current_pizzas = order.pizzas or []
+        current_pizzas = order.pizzas
         current_pizzas.append(pizza)
         await Order.update(db, column_name="uuid", column_value=order_uuid, pizzas=current_pizzas)
     return None

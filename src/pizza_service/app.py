@@ -5,12 +5,11 @@ import uvicorn
 from backend import schemas
 from backend.kafka import service
 from db import models
-from db.session import DB_DEPENDENCY
-from fastapi import FastAPI, BackgroundTasks
+from db.session import DB_DEPENDENCY, get_db
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from templates import pizza_service
-
 
 app = FastAPI()
 app.add_middleware(
@@ -59,12 +58,11 @@ async def get_order_bonuses(
     return await pizza_service.check_movie_ticket(db, order_uuid)
 
 
-
-
 @app.on_event("startup")
 async def launch_consumers():
-    await service.load_orders(DB_DEPENDENCY)
-    await service.load_order_bonuses(DB_DEPENDENCY)
+    async for db in get_db():
+        asyncio.create_task(service.load_orders(db))
+        asyncio.create_task(service.load_order_bonuses(db))
 
 
 
