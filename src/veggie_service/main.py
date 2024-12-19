@@ -43,10 +43,15 @@ async def add_veggie(order_id: str, pizza: dict) -> None:
 
 
 async def start_service():
-    # pizza_consumer = AIOKafkaConsumer(*["pizza-with-meats"], **current_config["consumer"])
     pizza_consumer = AIOKafkaConsumer(**current_config["consumer"])
     await pizza_consumer.start()
+
+    while not await pizza_consumer.topics():
+        print("Waiting for topic 'pizza-with-meats' to be available...")
+        await asyncio.sleep(2)
+
     pizza_consumer.subscribe(["pizza-with-meats"])
+    print("Consumer started!")
 
     async for event in pizza_consumer:
         if event is None:

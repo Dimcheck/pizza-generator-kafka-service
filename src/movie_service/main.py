@@ -22,7 +22,13 @@ async def movie_ticket_producer(order_id: str) -> None:
 async def start_service():
     order_consumer = AIOKafkaConsumer(**current_config["consumer"])
     await order_consumer.start()
+
+    while not await order_consumer.topics():
+        print("Waiting for topic 'order' to be available...")
+        await asyncio.sleep(2)
+
     order_consumer.subscribe(["order"])
+    print("Consumer started!")
 
     try:
         async for event in order_consumer:

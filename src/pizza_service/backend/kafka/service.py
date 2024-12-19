@@ -18,12 +18,12 @@ async def order_pizzas(db: AsyncSession, count: int) -> str:
     sent each pizza to kafka ingredient consumer
     """
     main_producer = AIOKafkaProducer(**current_config["producer"])
-
     await main_producer.start()
 
     order_uuid = str(uuid.uuid4().int)
     order = await Order.create(db, uuid=order_uuid, count=count)
 
+    """TODO refactor"""
     for i in range(count):
         new_pizza = Pizza()
         new_pizza.order_id = order.uuid
@@ -33,6 +33,7 @@ async def order_pizzas(db: AsyncSession, count: int) -> str:
         print(new_pizza)
         await main_producer.send_and_wait("pizza", key=order.uuid.encode("utf-8"), value=new_pizza.model_dump_json().encode("utf-8"))
         print("Producer sent messages!")
+    """TODO refactor"""
 
     try:
         await main_producer.send_and_wait("order", key=order.uuid.encode("utf-8"), value=b"")
@@ -48,9 +49,13 @@ async def load_orders(db: AsyncSession) -> None:
     accept last ingredient from pizza-with-veggies kafka producer
     add pizza to order
     """
-    # pizza_consumer = AIOKafkaConsumer(*["pizza-with-veggies"], **current_config["consumer1"])
     pizza_consumer = AIOKafkaConsumer(**current_config["consumer1"])
     await pizza_consumer.start()
+
+    while not await pizza_consumer.topics():
+        print("Waiting for topic 'pizza-with-veggies' to be available...")
+        await asyncio.sleep(2)
+
     pizza_consumer.subscribe(["pizza-with-veggies"])
     print("Consumer started!")
 
@@ -68,9 +73,13 @@ async def load_order_bonuses(db: AsyncSession) -> None:
     accept bonuses (if there are any) after order creation
     add bonuses to order
     """
-    # order_consumer = AIOKafkaConsumer(*["movie-ticket"], **current_config["consumer2"])
     order_consumer = AIOKafkaConsumer(**current_config["consumer2"])
     await order_consumer.start()
+
+    while not await order_consumer.topics():
+        print("Waiting for topic 'movie-ticket' to be available...")
+        await asyncio.sleep(2)
+
     order_consumer.subscribe(["movie-ticket"])
     print("Consumer started!")
 
