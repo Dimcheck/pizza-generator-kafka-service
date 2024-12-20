@@ -3,7 +3,11 @@ import json
 import uuid
 
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
-from backend.helpers import add_movie_ticket, add_pizza, get_pizza_image
+from backend.helpers import (
+    add_movie_ticket,
+    add_pizza,
+    pizza_generation,
+)
 from backend.schemas import Pizza
 from backend.utils import make_config
 from db.models import Order
@@ -18,28 +22,17 @@ async def order_pizzas(db: AsyncSession, count: int) -> str:
     sent each pizza to kafka ingredient consumer
     """
     main_producer = AIOKafkaProducer(**current_config["producer"])
+    await main_producer.stop()
     await main_producer.start()
 
-    order_uuid = str(uuid.uuid4().int)
-    order = await Order.create(db, uuid=order_uuid, count=count)
+    order = await Order.create(db, uuid=str(uuid.uuid4().int), count=count)
 
-    """TODO refactor"""
-    for i in range(count):
-        new_pizza = Pizza()
-        new_pizza.order_id = order.uuid
-        # image_data = await get_pizza_image()
-        # new_pizza.image = image_data["image"]
-        # print(f"image {i} loaded from {count}..")
-        # print(new_pizza)
-        await main_producer.send_and_wait("pizza", key=order.uuid.encode("utf-8"), value=new_pizza.model_dump_json().encode("utf-8"))
+    async for pizza in pizza_generation(order, Pizza, count):
+        await main_producer.send_and_wait("pizza", key=order.uuid.encode("utf-8"), value=pizza.model_dump_json().encode("utf-8"))
         print("Producer sent messages!")
-    """TODO refactor"""
 
-    try:
-        await main_producer.send_and_wait("order", key=order.uuid.encode("utf-8"), value=b"")
-        print("Producer sent all messages!")
-    finally:
-        await main_producer.stop()
+    await main_producer.send_and_wait("order", key=order.uuid.encode("utf-8"), value=b"")
+    print("Producer sent all messages!")
 
     return order.uuid
 
