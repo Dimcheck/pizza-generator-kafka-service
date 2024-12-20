@@ -5,7 +5,10 @@ This is simple data flow illustation of pizza generaion service.
 
 
 ## Setup
-
+Start Database
+```
+chmod +x start_db.sh && ./start_db.sh
+```
 Run everything with bash script
 ```
 chmod +x services.sh && ./services.sh
