@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 from configparser import ConfigParser
@@ -28,3 +29,17 @@ def make_config(pathfile: str = CONFIG_PATH) -> dict:
         "consumer1": consumer_config1,
         "consumer2": consumer_config2,
     }
+
+
+def encode_serializer(message):
+    return json.dumps(message).encode('utf-8')
+
+
+def decode_serializer(message):
+    try:
+        return json.loads(message.decode('utf-8'))
+    except json.JSONDecodeError:
+        if isinstance(message, bytes):
+            return message.decode('utf-8')
+        else:
+            return message
