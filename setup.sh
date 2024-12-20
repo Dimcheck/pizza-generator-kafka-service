@@ -23,4 +23,4 @@ gnome-terminal -- bash -c "cd src/pizza_service; \
         -d mysql/mysql-server:latest"
 
 
-gnome-terminal -- bash -c "docker compose up -d"
+gnome-terminal -- bash -c "docker compose up --build -d"
