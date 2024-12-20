@@ -12,7 +12,6 @@ current_config = make_config()
 async def movie_ticket_producer(order_id: str) -> None:
     ticket_producer = AIOKafkaProducer(**current_config["producer"])
     await ticket_producer.start()
-
     try:
         await ticket_producer.send_and_wait("movie-ticket", key=order_id.encode("utf-8"), value=json.dumps(get_random_movie()).encode("utf-8"))
     finally:
@@ -21,21 +20,16 @@ async def movie_ticket_producer(order_id: str) -> None:
 
 async def start_service():
     order_consumer = AIOKafkaConsumer(**current_config["consumer"])
-    await order_consumer.start()
-
-    while not await order_consumer.topics():
-        print("Waiting for topic 'order' to be available...")
-        await asyncio.sleep(2)
-
     order_consumer.subscribe(["order"])
-    print("Consumer started!")
 
+    await order_consumer.start()
     try:
         async for event in order_consumer:
             if event is None or event.key is None:
                 print("skipping empty event")
             else:
                 print(event.key)
+                print("Consumer caught event!")
                 await movie_ticket_producer(event.key.decode("utf-8"))
     finally:
         await order_consumer.stop()

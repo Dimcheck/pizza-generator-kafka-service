@@ -25,8 +25,6 @@ current_config = make_config(CONFIG_PATH)
 
 async def add_meat(order_id: str, pizza: dict) -> None:
     meat_producer = AIOKafkaProducer(**current_config["producer"])
-    await meat_producer.start()
-
     pizza["meats"] = " & ".join(
         random.choices(
             [
@@ -36,6 +34,7 @@ async def add_meat(order_id: str, pizza: dict) -> None:
             k=random.randint(1, 6)
         )
     )
+    await meat_producer.start()
     try:
         await meat_producer.send_and_wait("pizza-with-meats", key=order_id.encode("utf-8"), value=json.dumps(pizza).encode("utf-8"))
     finally:
@@ -44,21 +43,17 @@ async def add_meat(order_id: str, pizza: dict) -> None:
 
 async def start_service():
     pizza_consumer = AIOKafkaConsumer(**current_config["consumer"])
-    await pizza_consumer.start()
-
-    while not await pizza_consumer.topics():
-        print("Waiting for topic 'pizza-with-cheese' to be available...")
-        await asyncio.sleep(2)
-
     pizza_consumer.subscribe(["pizza-with-cheese"])
-    print("Consumer started!")
 
-    async for event in pizza_consumer:
-        if event is None:
-            ...
-        else:
-            pizza = json.loads(event.value.decode("utf-8"))
-            await add_meat(event.key.decode("utf-8"), pizza)
+    await pizza_consumer.start()
+    try:
+        async for event in pizza_consumer:
+            if event is not None:
+                print("Consumer started!")
+                pizza = json.loads(event.value.decode("utf-8"))
+                await add_meat(event.key.decode("utf-8"), pizza)
+    finally:
+        await pizza_consumer.stop()
 
 
 if __name__ == "__main__":
