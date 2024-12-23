@@ -1,44 +1,26 @@
 import uuid
-from asyncio import sleep
 
-from backend.base import Communication
-from db.models import Order
-from fastapi.exceptions import HTTPException
-from backend.schemas import Pizza
-from sqlalchemy.ext.asyncio import AsyncSession
 from aiokafka import AIOKafkaProducer
+from backend.base import Communication
+from backend.schemas import Pizza
+from db.models import Order
+from db.session import get_db
+from fastapi.exceptions import HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
-async def add_pizza(db: AsyncSession, order_uuid: str, pizza: dict) -> None:
-    if order := await Order.get_by_column(db, column_name="uuid", column_value=order_uuid):
-        current_pizzas = order.pizzas
-        current_pizzas.append(pizza)
-        await Order.update(db, column_name="uuid", column_value=order_uuid, pizzas=current_pizzas)
-    return None
+async def add_pizza(order_uuid: str, pizza: dict) -> None:
+    async for db in get_db():
+        if order := await Order.get_by_column(db, column_name="uuid", column_value=order_uuid):
+            current_pizzas = order.pizzas
+            current_pizzas.append(pizza)
+            await Order.update(db, column_name="uuid", column_value=order_uuid, pizzas=current_pizzas)
+        return None
 
 
-async def add_movie_ticket(db: AsyncSession, order_uuid: str, movie_ticket: dict) -> None:
-    """
-    TODO I assume the problem lies with connection to db.
-    raise sa_exc.InvalidRequestError(
-    sqlalchemy.exc.InvalidRequestError:
-    This session is provisioning a new connection;
-    concurrent operations are not permitted (Background on this error at: https://sqlalche.me/e/20/isce)
-
-    TODO I assume the problem lies with connection to db.
-    return await Order.update(db, column_name="uuid", column_value=order_uuid, movie_ticket=movie_ticket)
-    File "kafka-python-getting-started/src/pizza_service/db/models.py", line 41, in update
-    setattr(target_obj, key, value)
-    AttributeError: 'NoneType' object has no attribute 'movie_ticket'
-    """
-    # try:
-    print(order_uuid)
-    return await Order.update(db, column_name="uuid", column_value=order_uuid, movie_ticket=movie_ticket)
-    # except AttributeError:
-        # print("Warning: Order hasn't created yet")
-        # await sleep(1)
-        # await add_movie_ticket(db, order_uuid, movie_ticket)
-
+async def add_movie_ticket(order_uuid: str, movie_ticket: dict) -> None:
+    async for db in get_db():
+        return await Order.update(db, column_name="uuid", column_value=order_uuid, movie_ticket=movie_ticket)
 
 
 async def get_order(db: AsyncSession, order_uuid: str) -> dict | HTTPException:
