@@ -32,6 +32,7 @@ async def add_movie_ticket(db: AsyncSession, order_uuid: str, movie_ticket: dict
     AttributeError: 'NoneType' object has no attribute 'movie_ticket'
     """
     # try:
+    print(order_uuid)
     return await Order.update(db, column_name="uuid", column_value=order_uuid, movie_ticket=movie_ticket)
     # except AttributeError:
         # print("Warning: Order hasn't created yet")
@@ -47,9 +48,12 @@ async def get_order(db: AsyncSession, order_uuid: str) -> dict | HTTPException:
         raise HTTPException(404, f"Order {order_uuid} not found")
 
 
-async def get_pizza_image() -> dict:
+async def get_pizza_image() -> dict | None:
     request = Communication("https://foodish-api.com/api/images/pizza")
-    return await request.get_response()
+    data = await request.get_response()
+    if isinstance(data, HTTPException):
+        return await None
+    return data
 
 
 async def pizza_generation(
@@ -61,10 +65,9 @@ async def pizza_generation(
     for i in range(count):
         pizza = schema()
         pizza.order_id = uuid
-        image_data = await get_pizza_image()
-        pizza.image = image_data["image"]
-        yield pizza
-
+        if image_data := await get_pizza_image():
+            pizza.image = image_data["image"]
+            yield pizza
 
 
 async def order_pizza(db: AsyncSession, producer: AIOKafkaProducer, count: int):

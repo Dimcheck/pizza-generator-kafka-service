@@ -49,7 +49,7 @@ async def start_service():
     try:
         async for event in pizza_consumer:
             if event is not None:
-                print("Consumer started!")
+                print("Consumer caught event!")
                 pizza = json.loads(event.value.decode("utf-8"))
                 await add_meat(event.key.decode("utf-8"), pizza)
     finally:

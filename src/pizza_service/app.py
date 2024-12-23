@@ -10,7 +10,7 @@ from backend.utils import make_config, encode_serializer, decode_serializer
 from backend.kafka import service
 from templates import pizza_service
 from db import models
-from db.session import DB_DEPENDENCY, get_db
+from db.session import DB_DEPENDENCY, get_db, scoped_async_session
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -52,9 +52,8 @@ consumer2 = AIOKafkaConsumer(
 @app.on_event("startup")
 async def startup():
     await service.startup_producer(producer)
-    async for db in get_db():
-        loop.create_task(service.startup_consumer1(db, consumer1))
-        loop.create_task(service.startup_consumer2(db, consumer2))
+    loop.create_task(service.startup_consumer1(scoped_async_session, consumer1))
+    loop.create_task(service.startup_consumer2(scoped_async_session, consumer2))
 
 
 @app.on_event("shutdown")

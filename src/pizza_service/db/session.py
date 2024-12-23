@@ -1,15 +1,17 @@
 import contextlib
+from asyncio import current_task
 from typing import Annotated, Any, AsyncIterator, List, Optional
 
 from configs.settings import settings
 from fastapi import Depends
 from sqlalchemy import select
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.exc import IntegrityError, NoResultFound
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.ext.asyncio import (
     AsyncAttrs,
     AsyncConnection,
     AsyncSession,
+    async_scoped_session,
     async_sessionmaker,
     create_async_engine,
 )
@@ -132,13 +134,46 @@ class DatabaseSessionManager:
         finally:
             await session.close()
 
+    # @contextlib.asynccontextmanager
+    def scoped_session(self) -> AsyncIterator[AsyncConnection]:
+        if self._engine is None:
+            raise DatabaseSessionManagerNotInitializedError()
+
+        async_session_factory = async_sessionmaker(
+            self._engine,
+            expire_on_commit=False,
+            autocommit=False,
+        )
+        return async_scoped_session(
+            async_session_factory,
+            scopefunc=current_task,
+        )
+
 
 sessionmanager = DatabaseSessionManager(settings.DATABASE_URL,)
+scoped_async_session = sessionmanager.scoped_session()
 
 
 async def get_db():
     async with sessionmanager.session() as session:
         yield session
+
+# async_engine = create_async_engine(settings.DATABASE_URL)
+# async_session = async_sessionmaker(autocommit=False, bind=async_engine, expire_on_commit=False)
+
+# async_session_factory = async_sessionmaker(
+#     async_engine,
+#     expire_on_commit=False,
+# )
+# AsyncScopedSession = async_scoped_session(
+#     async_session_factory,
+#     scopefunc=current_task,
+# )
+
+# scoped_async_session = AsyncScopedSession()
+
+
+
 
 
 DB_DEPENDENCY = Annotated[AsyncSession, Depends(get_db)]
