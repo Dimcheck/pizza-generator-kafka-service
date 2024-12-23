@@ -1,23 +1,38 @@
+from backend.helpers import get_order
 from fastapi.responses import HTMLResponse
-from fastapi.exceptions import HTTPException
-from kafka import service
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
-
-def list_order(order_id: int) -> HTMLResponse:
-    html_content = f"""<span class="fade-in">{order_id}</span>"""
+async def list_order(order_uuid: int) -> HTMLResponse:
+    html_content = f"""<span class="fade-in">{order_uuid}</span>"""
     return HTMLResponse(content=html_content, status_code=200)
 
-def list_pizzas(order_id: str) -> HTMLResponse:
-    try:
-        order = service.orders_db[order_id].__dict__
-    except KeyError:
-        raise HTTPException(404, f"Order {order_id} not found")
-    pizzas = order["_PizzaOrder__pizzas"]
+
+async def check_movie_ticket(db: AsyncSession, order_uuid: str) -> HTMLResponse:
+    order = await get_order(db, order_uuid)
+    movie = order.movie_ticket
+
+    if movie.get("Response") == "True":
+        html_content = f"""
+        You won free ticket to {movie.get("Title")}!
+        <ul class="fade-in">
+            <li><img src="{movie.get("Poster")}" alt="movie img" style="width: 60px; height: auto;"/></li>
+            <li>Genre: {movie.get("Genre")}</li>
+            <li>Director: {movie.get("Director")}</li>
+            <li>Plot: {movie.get("Plot")}</li>
+        </ul>
+        """
+        return HTMLResponse(content=html_content, status_code=200)
+    return HTMLResponse(content="", status_code=404)
+
+
+async def list_pizzas(db: AsyncSession, order_uuid: str) -> HTMLResponse:
+    order = await get_order(db, order_uuid)
+    pizzas = order.pizzas
 
     html_content = f"""
     <body>
-        <h3>Pizzas of order #{order.get("id", "")}</h3>
+        <h3>Pizzas of order #{order.uuid}</h3>
     """
     for pizza in pizzas:
         html_content += f"""
@@ -29,12 +44,10 @@ def list_pizzas(order_id: str) -> HTMLResponse:
             <li>Veggies: {pizza["veggies"]}</li>
         </ul>
         """
-
     html_content += """
         </table>
     </body>
     """
-
     return HTMLResponse(content=html_content, status_code=200)
 
 

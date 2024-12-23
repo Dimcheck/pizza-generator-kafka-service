@@ -1,0 +1,17 @@
+h3 {
+	color: #f00;
+}  
+span.fade-in {
+	color: #f00;
+}
+
+.fade-in {
+	opacity: 0;
+	animation: fadeIn 3s forwards;
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+

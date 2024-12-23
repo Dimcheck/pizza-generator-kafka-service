@@ -1,58 +1,46 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
-   <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
-   <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/path-params.js"></script>
-   <meta name="htmx-config" content='{"selfRequestsOnly":false}'>
+    <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/path-params.js"></script>
+    <meta name="htmx-config" content='{"selfRequestsOnly":false}'>
+    <link href="pizza_service.css" rel="stylesheet" type="text/css">
   </head>
-  <style>
-      h3 {
-        color: #f00;
-      }  
-      span.fade-in {
-        color: #f00;
-      }
 
-      .fade-in {
-        opacity: 0;
-        animation: fadeIn 3s forwards;
-      }
-
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-  </style>
- 
   <body>
-
     <title>Order Review</title>
     <h3>Request your Pizzas</h3>
-      <div hx-ext="path-params" id="request-order-container">
-        <form id="create-order-form"
-          hx-post="http://0.0.0.0:8000/order/{count}"
-          hx-target="#response-order-container">
-          <input type="text" name="count" placeholder="Enter a number of pizzas you want.." />
-          <button type="submit">Order</button>
-        </form>
-      </div>
-      <div id="response-order-container" hx-trigger="load">
-        <div class="loader" hx-ext="path-params"></div>
-      </div>
 
+    <div id="request-order-container" hx-ext="path-params">
+      <form id="create-order-form"
+        hx-post="http://0.0.0.0:8000/order/{count}"
+        hx-target="#response-order-container">
+        <input type="text" name="count" placeholder="Enter a number of pizzas you want.." />
+        <button type="submit">Order</button>
+      </form>
+    </div>
 
-      <div hx-ext="path-params" id="request-see-order-container">
-        <form id="read-order-form"
-          hx-get="http://0.0.0.0:8000/order/{order-id}"
-          hx-target="#response-see-order-container">
-          <input type="text" name="order-id" placeholder="Your order number.." />
-          <button type="submit">See Order</button>
-        </form>
-      </div>
-     <div id="response-see-order-container" hx-trigger="load">
-       <div class="loader" hx-ext="path-params"></div>
-     </div>
+    <div id="response-order-container" hx-trigger="load">
+      <div class="loader"></div>
+    </div>
 
+    <div id="request-see-order-container" hx-ext="path-params">
+      <form id="read-order-form"
+        hx-get="http://0.0.0.0:8000/order/{order-id}"
+        hx-target="#response-see-order-container">
+        <input id="order-id-input" type="text" name="order-id" placeholder="Your order number.." />
+        <button id="see-order-button" type="submit">See Order</button>
+      </form>
+    </div>
+
+    <div id="response-see-order-container" hx-trigger="load">
+      <div class="loader"></div>
+    </div>
+
+    <div id="response-see-bonus-container" hx-trigger="load">
+      <div class="loader"></div>
+    </div>
+
+    <script src="pizza_service.js"></script>
   </body>
 </html>
