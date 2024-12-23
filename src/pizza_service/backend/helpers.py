@@ -32,9 +32,10 @@ async def get_order(db: AsyncSession, order_uuid: str) -> dict | HTTPException:
 
 async def get_pizza_image() -> dict | None:
     request = Communication("https://foodish-api.com/api/images/pizza")
-    data = await request.get_response()
-    if isinstance(data, HTTPException):
-        return await None
+    try:
+        data = await request.get_response()
+    except HTTPException:
+        return None
     return data
 
 
@@ -42,7 +43,7 @@ async def pizza_generation(
     uuid: str,
     schema: Pizza,
     count: int
-) -> Pizza:
+) -> Pizza | None:
 
     for i in range(count):
         pizza = schema()
@@ -52,7 +53,7 @@ async def pizza_generation(
             yield pizza
 
 
-async def order_pizza(db: AsyncSession, producer: AIOKafkaProducer, count: int):
+async def order_pizza(db: AsyncSession, producer: AIOKafkaProducer, count: int) -> str:
     """
     create sequence of pizzas by ::count::
     sent each pizza to kafka ingredient consumer
@@ -61,7 +62,7 @@ async def order_pizza(db: AsyncSession, producer: AIOKafkaProducer, count: int):
 
     async for pizza in pizza_generation(order.uuid, Pizza, count):
         await producer.send_and_wait("pizza", key=order.uuid.encode("utf-8"), value=pizza.model_dump_json().encode("utf-8"))
-        print(f"Producer sent message!{count}")
+        print("Producer sent message!")
 
     await producer.send_and_wait("order", key=order.uuid.encode("utf-8"), value=b"")
     print("Producer sent all messages!")
