@@ -1,3 +1,7 @@
+// Import the constants from rain.js
+import { MAX_DROPS, rainContainer, startRain } from './rain.js';
+
+
 function debug(websocket) {
     websocket.addEventListener("open", () => {
         console.log("Connected to WebSocket server");
@@ -13,22 +17,35 @@ function debug(websocket) {
 }
 
 
-function listenMessageWS(chatWindow, websocket) {
+function listenMessageWS(chatWindow, userCountElement, websocket) {
     // Listen for incoming messages
     websocket.addEventListener("message", ({ data }) => {
         console.log("Incoming message:", data);  // Debugging line
         const event = JSON.parse(data);
+        
+        // Handle different message types
         if (event.type === "message") {
             const messageElement = document.createElement("div");
             messageElement.textContent = `${event.username}: ${event.text}`;
             chatWindow.appendChild(messageElement);
             chatWindow.scrollTop = chatWindow.scrollHeight;  // Scroll to bottom
+        } 
+        // Handle connection count updates
+        else if (event.type === "connection_count") {
+            userCountElement.textContent = event.count;
+        }
+        // Handle error messages
+        else if (event.type === "error") {
+            const errorElement = document.createElement("div");
+            errorElement.textContent = `Error: ${event.text}`;
+            errorElement.style.color = "red";
+            chatWindow.appendChild(errorElement);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
         }
     });
-
 }
 
-function sendMessageWS(messageInput,sendButton, username, websocket) {
+function sendMessageWS(messageInput, sendButton, username, websocket) {
     // Send message on button click
     sendButton.addEventListener("click", () => {
         const text = messageInput.value;
@@ -51,12 +68,14 @@ window.addEventListener("DOMContentLoaded", () => {
     const chatWindow = document.getElementById("chat-window");
     const messageInput = document.getElementById("message-input");
     const sendButton = document.getElementById("send-button");
+    const userCountElement = document.getElementById("user-count");
+    
     const username = "User" + Math.floor(Math.random() * 1000);
 
     const websocket = new WebSocket("ws://localhost:8001/");
 
-    debug(websocket)
-    listenMessageWS(chatWindow, websocket)
-    sendMessageWS(messageInput, sendButton, username, websocket)
-
+    debug(websocket);
+    startRain();
+    listenMessageWS(chatWindow, userCountElement, websocket);
+    sendMessageWS(messageInput, sendButton, username, websocket);
 });

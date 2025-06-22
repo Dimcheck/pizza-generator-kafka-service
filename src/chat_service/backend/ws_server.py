@@ -1,36 +1,39 @@
 import asyncio
 import json
-from websockets.asyncio.server import serve
 
+from helpers import BroadcastManager
+from websockets.asyncio.server import ServerConnection, serve
 
 clients = set()
 
 
-async def handler(websocket):
+async def handler(websocket: ServerConnection) -> None:
     clients.add(websocket)
-    # Send a welcome message to the new client
-    await websocket.send(json.dumps({
-        "type": "message",
-        "username": "Server",
-        "text": "Welcome to the chat!"
-    }))
-
-    async for message in websocket:
-        data = json.loads(message)
-        if data["type"] == "message":
-            broadcast = json.dumps({
+    bm = BroadcastManager(clients)
+    
+    await websocket.send(
+        json.dumps(
+            {
                 "type": "message",
-                "username": data["username"],
-                "text": data["text"]
-            })
+                "username": "Server",
+                "text": "Welcome to the chat!",
+            },
+        ),
+    )
+    
+    await bm.broadcast_connection_count()
+    try:
+        async for message in websocket:
+            await bm.broadcast_message(message, websocket)
+    finally:
+        clients.remove(websocket)
+        await bm.broadcast_connection_count()
+        
 
-            for client in clients:
-                await client.send(broadcast)
 
-
-async def main():
+async def main() -> None:
     async with serve(handler, "", 8001):
-        await asyncio.Future()  # run forever
+        await asyncio.Future() 
 
 
 if __name__ == "__main__":
