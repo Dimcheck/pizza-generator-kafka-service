@@ -1,15 +1,16 @@
 import asyncio
 import json
+from collections.abc import Set
 
-from helpers import BroadcastManager
+from backend.helpers import BroadcastManager
 from websockets.asyncio.server import ServerConnection, serve
 
-clients = set()
+connections: Set[ServerConnection] = set()
 
 
 async def handler(websocket: ServerConnection) -> None:
-    clients.add(websocket)
-    bm = BroadcastManager(clients)
+    connections.add(websocket)
+    bm = BroadcastManager(connections)
     
     await websocket.send(
         json.dumps(
@@ -20,13 +21,12 @@ async def handler(websocket: ServerConnection) -> None:
             },
         ),
     )
-    
     await bm.broadcast_connection_count()
     try:
         async for message in websocket:
             await bm.broadcast_message(message, websocket)
     finally:
-        clients.remove(websocket)
+        connections.remove(websocket)
         await bm.broadcast_connection_count()
         
 

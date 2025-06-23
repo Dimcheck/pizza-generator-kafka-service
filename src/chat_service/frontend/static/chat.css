@@ -1,6 +1,4 @@
 /* Basic styling for the chat interface */
-
-
 body {
     display: flex;
     flex-direction: column;

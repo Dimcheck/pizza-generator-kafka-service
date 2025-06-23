@@ -72,7 +72,8 @@ window.addEventListener("DOMContentLoaded", () => {
     
     const username = "User" + Math.floor(Math.random() * 1000);
 
-    const websocket = new WebSocket("ws://localhost:8001/");
+    // const websocket = new WebSocket("ws://localhost:8001/");
+    const websocket = new WebSocket("ws://localhost:8000/ws");
 
     debug(websocket);
     startRain();
