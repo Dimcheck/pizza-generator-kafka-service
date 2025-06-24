@@ -8,7 +8,6 @@ import time
 from asyncio.tasks import Task
 from collections.abc import Set
 from copy import copy
-from pathlib import Path
 from typing import Any, Optional
 
 from backend.exceptions import IncorectDataError
@@ -16,9 +15,6 @@ from fastapi import WebSocket
 from pydantic import BaseModel
 from uvicorn.server import HANDLED_SIGNALS
 from websockets.asyncio.server import ServerConnection
-
-BASE_DIR = Path(__file__).resolve().parent.parent
-FRONTEND_DIR = BASE_DIR / "frontend"
 
 
 class WebSocketData(BaseModel):
@@ -36,20 +32,22 @@ class BroadcastManager:
     ) -> None:
         self.connections = connections
         self.logger = logger
+        self.lock = asyncio.Lock()
 
     async def broadcast(self, message: str, websocket: Optional[ServerConnection | WebSocket] = None) -> None:
         """Broadcast user message to all active chat members."""
-        for connection in self.connections: 
-            if connection != websocket:  # Don't send back to the sender
-                try:
-                    if isinstance(connection, WebSocket):
-                        await connection.send_text(message)
-                    else:
-                        await connection.send(message)
-                except Exception as e:
-                    self.logger.debug("Failed to send message to a connection: %s", e)
-                    continue
-    
+        async with self.lock:
+            for connection in self.connections: 
+                if connection != websocket:  # Don't send back to the sender
+                    try:
+                        if isinstance(connection, WebSocket):
+                            await connection.send_text(message)
+                        else:
+                            await connection.send(message)
+                    except Exception as e:
+                        self.logger.debug("Failed to send message to a connection: %s", e)
+                        continue
+        
     async def broadcast_connection_count(self) -> None:
         """Broadcast the current connection count to all active chat members."""
         await self.broadcast(
@@ -73,6 +71,7 @@ class BroadcastManager:
             
         return await self.broadcast(content)
 
+
 class ShutdownManager:
     """Manages graceful shutdown of the application."""
     def __init__(
@@ -86,25 +85,24 @@ class ShutdownManager:
         self.is_shutting_down = False
         self.worker_id = id(asyncio.current_task()) if asyncio.current_task() else None
         self.logger = logger
+        self.lock = asyncio.Lock()
         
     async def monitor_shutdown(self) -> None:
         """Monitor the shutdown process and force shutdown if needed"""
         shutdown_deadline = time.time() + self.MAX_SHUTDOWN_TIME
-        while self.connections or time.time() < shutdown_deadline:
-            remaining_time = int(shutdown_deadline - time.time())
-            remaining_minutes, remaining_seconds = remaining_time // 60, remaining_time % 60
-            self.logger.info("Graceful shutdown in progress. Connections remaining: %d", len(self.connections))
-            self.logger.info("Time remaining: %d m %d s", remaining_minutes, remaining_seconds)
-            
-            for connection in copy(self.connections):
-                with contextlib.suppress(RuntimeError):
-                    await connection.close(code=1000, reason="Server shutting down")
-                    self.connections.remove(connection)
-                    await asyncio.sleep(1)
-
-        if self.connections:
-            sys.exit("Time is up. Forcefull shutdown in progress..")
-        self.logger.info("All connections closed gracefully")
+        async with self.lock:
+            while self.connections and time.time() < shutdown_deadline:
+                remaining_time = int(shutdown_deadline - time.time())
+                remaining_minutes, remaining_seconds = remaining_time // 60, remaining_time % 60
+                self.logger.info("Graceful shutdown in progress. Connections remaining: %d", len(self.connections))
+                self.logger.info("Time remaining: %d m %d s", remaining_minutes, remaining_seconds)
+                for connection in copy(self.connections):
+                    with contextlib.suppress(RuntimeError):
+                        await connection.close(code=1000, reason="Server shutting down")
+                        self.connections.remove(connection)
+            if self.connections:
+                sys.exit("Time is up. Forcefull shutdown in progress..")
+            self.logger.info("All connections closed gracefully")
 
     async def begin_shutdown(self) -> Task[Any]:
         """Begin the shutdown process"""
@@ -113,8 +111,7 @@ class ShutdownManager:
         await bm.broadcast(
             WebSocketData(
                 text="Server is shutting down for maintenance. Please reconnect later.",
-            )
-            .model_dump_json(exclude_none=True),
+            ).model_dump_json(exclude_none=True),
         )
         return asyncio.create_task(self.monitor_shutdown())
         

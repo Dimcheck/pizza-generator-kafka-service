@@ -1,23 +1,14 @@
-import logging
+import asyncio
 from typing import Set
 
 from backend.helpers import (
-    FRONTEND_DIR,
     BroadcastManager,
     ShutdownManager,
     WebSocketData,
 )
+from backend.settings import html_content, logger
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger("chat_service")
-
-with open(FRONTEND_DIR / "index.html", "r") as f:
-    html_content = f.read()
 
 connections: Set[WebSocket] = set()
 shutdown_manager = ShutdownManager(connections, logger, 100)
@@ -32,11 +23,13 @@ async def get() -> HTMLResponse:
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket) -> None:
     """Handle WebSocket connections"""
+    lock = asyncio.Lock()
     if shutdown_manager.is_shutting_down:
         ...
     else:
         await websocket.accept()
-        connections.add(websocket)
+        async with lock:
+            connections.add(websocket)
         bm = BroadcastManager(connections, logger)
         try:
             await websocket.send_text(
@@ -45,6 +38,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 ).model_dump_json(exclude_none=True),
             )
             await bm.broadcast_connection_count()
+            
             while True:
                 message = await websocket.receive_text()
                 await bm.broadcast_message(message, websocket)
@@ -54,7 +48,8 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             logger.warning("WebSocket error: %s", e)
         finally:
             if websocket in connections:
-                connections.remove(websocket)
+                async with lock:
+                    connections.remove(websocket)
                 if not shutdown_manager.is_shutting_down:
                     await bm.broadcast_connection_count()
                 logger.debug("Client disconnected. Remaining connections: %d", {len(connections)})

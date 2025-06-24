@@ -1,5 +1,5 @@
-from backend.helpers import FRONTEND_DIR
 from backend.routes import router
+from backend.settings import FRONTEND_DIR
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
