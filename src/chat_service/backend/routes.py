@@ -10,6 +10,7 @@ from backend.settings import html_content, logger
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 
+lock = asyncio.Lock()
 connections: Set[WebSocket] = set()
 shutdown_manager = ShutdownManager(connections, logger, 100)
 
@@ -26,7 +27,6 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     if shutdown_manager.is_shutting_down:
         ...
     else:
-        lock = asyncio.Lock()
         broadcast_manager = BroadcastManager(connections, logger)
         await websocket.accept()
         async with lock:
@@ -40,7 +40,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
             await broadcast_manager.broadcast_connection_count()
             while True:
                 message = await websocket.receive_text()
-                await bm.broadcast_message(message, websocket)
+                await broadcast_manager.broadcast_message(message, websocket)
         except WebSocketDisconnect:
             logger.info("Client disconnected normally")
         except Exception as e:
