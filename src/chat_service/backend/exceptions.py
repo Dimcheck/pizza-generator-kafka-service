@@ -13,7 +13,6 @@ class WebsocketError(Exception):
         super().__init__(self.message)
     
     async def send(self) -> None:
-        
         if isinstance(self.websocket, WebSocket):
             await self.websocket.send_text(self.data)
         else:    

@@ -23,22 +23,21 @@ async def get() -> HTMLResponse:
 @router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket) -> None:
     """Handle WebSocket connections"""
-    lock = asyncio.Lock()
     if shutdown_manager.is_shutting_down:
         ...
     else:
+        lock = asyncio.Lock()
+        broadcast_manager = BroadcastManager(connections, logger)
         await websocket.accept()
         async with lock:
             connections.add(websocket)
-        bm = BroadcastManager(connections, logger)
         try:
             await websocket.send_text(
                 WebSocketData(
                     text="Welcome to the chat!",
                 ).model_dump_json(exclude_none=True),
             )
-            await bm.broadcast_connection_count()
-            
+            await broadcast_manager.broadcast_connection_count()
             while True:
                 message = await websocket.receive_text()
                 await bm.broadcast_message(message, websocket)
@@ -51,5 +50,5 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 async with lock:
                     connections.remove(websocket)
                 if not shutdown_manager.is_shutting_down:
-                    await bm.broadcast_connection_count()
+                    await broadcast_manager.broadcast_connection_count()
                 logger.debug("Client disconnected. Remaining connections: %d", {len(connections)})

@@ -68,7 +68,6 @@ class BroadcastManager:
         except KeyError:
             error = IncorectDataError(websocket)
             return await error.send()
-            
         return await self.broadcast(content)
 
 
