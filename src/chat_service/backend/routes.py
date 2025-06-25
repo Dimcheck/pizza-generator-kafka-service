@@ -12,7 +12,7 @@ from fastapi.responses import HTMLResponse
 
 lock = asyncio.Lock()
 connections: Set[WebSocket] = set()
-shutdown_manager = ShutdownManager(connections, logger, 100)
+shutdown_manager = ShutdownManager(connections, logger)
 
 router = APIRouter(on_startup=[shutdown_manager.startup_event])
 
