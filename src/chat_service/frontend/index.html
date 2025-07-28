@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="chat.css" rel="stylesheet" type="text/css">
+    <link href="/static/chat.css" rel="stylesheet" type="text/css">
+    <link href="/static/rain.css" rel="stylesheet" type="text/css">
     <title>WebSocket Chat</title>
 </head>
 <body>
-
+<div id="rainContainer" class="rain-container"></div>
 <div id="chat-container">
+    <div id="chat-header">
+        <h2>Demo Chat</h2>
+        <div id="connection-counter">Active users: <span id="user-count">-</span></div>
+    </div>
     <div id="chat-window">
         <!-- Messages will appear here -->
     </div>
@@ -17,6 +22,8 @@
         <button id="send-button">Send</button>
     </div>
 </div>
-<script src="chat.js"></script>
+<!-- Note the type="module" attribute -->
+<script type="module" src="/static/chat.js"></script>
+<script type="module" src="/static/rain.js"></script>
 </body>
 </html>
